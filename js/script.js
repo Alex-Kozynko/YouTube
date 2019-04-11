@@ -2,6 +2,7 @@ const swicher = document.querySelector("#cbx"),
       more    = document.querySelector('.more'),
       modal   = document.querySelector('.modal'),
       videos  = document.querySelectorAll('.videos__item');
+      videosWrapper = document.querySelector('.videos__wrapper');
 let player;
 
 function bindSlideToggle(trigger, boxBady, content, openClass) {
@@ -103,11 +104,10 @@ function load() {
             'part': 'snippet,contentDetails',
             "maxResults": '6',
             'playlistId': 'PL3LQJkGQtzc4gsrFkm4MjWhTXhopsMgpv'
-        })
+        });
     }).then(function (response) {
         console.log(response.result);
 
-        const videosWrapper = document.querySelector('.videos__wrapper');
         response.result.items.forEach(item => {
             let card = document.createElement('a');
 
@@ -140,7 +140,60 @@ function load() {
 more.addEventListener('click', () => {
     more.remove();
     gapi.load('client', load);
-})
+});
+
+function search(target) {
+    gapi.client.init({
+        'apiKey': 'AIzaSyBOF6v3ZiRU9muS7pU2qBdbY2f4z1uQP24',
+        'discoveryDocs': ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"]
+    }).then(function () {
+        return gapi.client.youtube.search.list({
+            'maxResults': '10',
+            'part': 'snippet',
+            'q': `${target}`,
+            'type': ''
+        });
+    }).then(function (response) {
+        console.log(response.result);
+
+        videosWrapper.innerHTML = '';
+
+        response.result.items.forEach(item => {
+            let card = document.createElement('a');
+
+            card.classList.add('videos__item', 'videos__item-active');
+            card.setAttribute('data-url', item.id.videoId);
+            card.innerHTML = `
+               <img src="${item.snippet.thumbnails.high.url}" alt="thumb">
+               <div class="videos__item-descr">
+                    ${item.snippet.title}
+               </div>
+               <div class="videos__item-views">
+                    2.7 тыс просмотров
+               </div>
+           `;
+            videosWrapper.appendChild(card);
+            setTimeout(() => {
+                card.classList.remove('videos__item-active');
+            }, 10);
+            if (night === true) {
+                card.querySelector('.videos__item-descr').style.color = '#fff';
+                card.querySelector('.videos__item-views').style.color = '#fff';
+            }
+        });
+
+        sliceTitle('.videos__item-descr', 100);
+        bindModal(document.querySelectorAll('.videos__item'));
+    })
+}
+
+document.querySelector('.search').addEventListener('submit', (e) => {
+    e.preventDefault();
+    gapi.load('client', () => {
+       search(document.querySelector('.search > input').value);
+    });
+    document.querySelector('.search > input').value = '';
+});
 
 function sliceTitle(title, sign) {
     document.querySelectorAll(title).forEach(item => {
