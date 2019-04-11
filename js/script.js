@@ -95,40 +95,45 @@ more.addEventListener('click', () => {
 
 });*/
 
-function load() {
+function load(colPost) {
     gapi.client.init({
         'apiKey': 'AIzaSyBOF6v3ZiRU9muS7pU2qBdbY2f4z1uQP24',
         'discoveryDocs': ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"]
     }).then(function () {
         return gapi.client.youtube.playlistItems.list({
             'part': 'snippet,contentDetails',
-            "maxResults": '6',
+            "maxResults": colPost,
             'playlistId': 'PL3LQJkGQtzc4gsrFkm4MjWhTXhopsMgpv'
         });
     }).then(function (response) {
         console.log(response.result);
-
+        const exclude = document.querySelectorAll('.videos__wrapper > .videos__item').length;
+        let i = exclude;
         response.result.items.forEach(item => {
-            let card = document.createElement('a');
+            if (i >= 1) {
+                i--
+            } else {
+                let card = document.createElement('a');
 
-            card.classList.add('videos__item', 'videos__item-active');
-            card.setAttribute('data-url', item.contentDetails.videoId);
-            card.innerHTML = `
-               <img src="${item.snippet.thumbnails.high.url}" alt="thumb">
-               <div class="videos__item-descr">
-                    ${item.snippet.title}
-               </div>
-               <div class="videos__item-views">
-                    2.7 тыс просмотров
-               </div>
-           `;
-            videosWrapper.appendChild(card);
-            setTimeout(() => {
-                card.classList.remove('videos__item-active');
-            }, 10);
-            if (night === true) {
-                card.querySelector('.videos__item-descr').style.color = '#fff';
-                card.querySelector('.videos__item-views').style.color = '#fff';
+                card.classList.add('videos__item', 'videos__item-active');
+                card.setAttribute('data-url', item.contentDetails.videoId);
+                card.innerHTML = `
+                   <img src="${item.snippet.thumbnails.high.url}" alt="thumb">
+                   <div class="videos__item-descr">
+                        ${item.snippet.title}
+                   </div>
+                   <div class="videos__item-views">
+                        2.7 тыс просмотров
+                   </div>
+               `;
+                videosWrapper.appendChild(card);
+                setTimeout(() => {
+                    card.classList.remove('videos__item-active');
+                }, 10);
+                if (night === true) {
+                    card.querySelector('.videos__item-descr').style.color = '#fff';
+                    card.querySelector('.videos__item-views').style.color = '#fff';
+                }
             }
         });
 
@@ -137,18 +142,32 @@ function load() {
     })
 }
 
+gapi.load('client', () => {
+    load(3)
+});
 more.addEventListener('click', () => {
-    more.remove();
-    gapi.load('client', load);
+    const exclude = document.querySelectorAll('.videos__wrapper > .videos__item').length;
+    gapi.load('client', () => {
+        load(exclude + 3);
+        if (document.querySelector('.search > input').value != '') {
+            search(document.querySelector('.search > input').value, exclude + 3);
+        }
+    });
+    setTimeout(() => {
+        close = document.querySelectorAll('.videos__wrapper > .videos__item').length;
+    }, 200);
+    if (close === exclude) {
+        more.remove();
+    }
 });
 
-function search(target) {
+function search(target, colPost) {
     gapi.client.init({
         'apiKey': 'AIzaSyBOF6v3ZiRU9muS7pU2qBdbY2f4z1uQP24',
         'discoveryDocs': ["https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest"]
     }).then(function () {
         return gapi.client.youtube.search.list({
-            'maxResults': '10',
+            'maxResults': colPost,
             'part': 'snippet',
             'q': `${target}`,
             'type': ''
@@ -156,29 +175,36 @@ function search(target) {
     }).then(function (response) {
         console.log(response.result);
 
-        videosWrapper.innerHTML = '';
-
+        while (videosWrapper.firstChild) {
+            videosWrapper.removeChild(videosWrapper.firstChild)
+        }
+        const exclude = document.querySelectorAll('.videos__wrapper > .videos__item').length;
+        let i = exclude;
         response.result.items.forEach(item => {
-            let card = document.createElement('a');
+            if (i >= 1) {
+                i--
+            } else {
+                let card = document.createElement('a');
 
-            card.classList.add('videos__item', 'videos__item-active');
-            card.setAttribute('data-url', item.id.videoId);
-            card.innerHTML = `
-               <img src="${item.snippet.thumbnails.high.url}" alt="thumb">
-               <div class="videos__item-descr">
-                    ${item.snippet.title}
-               </div>
-               <div class="videos__item-views">
-                    2.7 тыс просмотров
-               </div>
-           `;
-            videosWrapper.appendChild(card);
-            setTimeout(() => {
-                card.classList.remove('videos__item-active');
-            }, 10);
-            if (night === true) {
-                card.querySelector('.videos__item-descr').style.color = '#fff';
-                card.querySelector('.videos__item-views').style.color = '#fff';
+                card.classList.add('videos__item', 'videos__item-active');
+                card.setAttribute('data-url', item.id.videoId);
+                card.innerHTML = `
+                   <img src="${item.snippet.thumbnails.high.url}" alt="thumb">
+                   <div class="videos__item-descr">
+                        ${item.snippet.title}
+                   </div>
+                   <div class="videos__item-views">
+                        2.7 тыс просмотров
+                   </div>
+               `;
+                videosWrapper.appendChild(card);
+                setTimeout(() => {
+                    card.classList.remove('videos__item-active');
+                }, 10);
+                if (night === true) {
+                    card.querySelector('.videos__item-descr').style.color = '#fff';
+                    card.querySelector('.videos__item-views').style.color = '#fff';
+                }
             }
         });
 
@@ -189,10 +215,14 @@ function search(target) {
 
 document.querySelector('.search').addEventListener('submit', (e) => {
     e.preventDefault();
+    const exclude = document.querySelectorAll('.videos__wrapper > .videos__item').length;
     gapi.load('client', () => {
-       search(document.querySelector('.search > input').value);
+        if (document.querySelector('.search > input').value != '') {
+            search(document.querySelector('.search > input').value, exclude + 3);
+        } else {
+            load(exclude + 3)
+        }
     });
-    document.querySelector('.search > input').value = '';
 });
 
 function sliceTitle(title, sign) {
